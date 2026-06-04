@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อสอบกลางภาค คณะสถาปัตยกรรมศาสตร์และการออกแบบ มหาวิทยาลัยเบงจันทร์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        :root {
+            --primary-navy: #0A1931; /* สีกรมมหาวิทยาลัย */
+            --secondary-navy: #150E56;
+            --white: #FFFFFF;
+            --gray-light: #F4F4F9;
+            --text-dark: #333333;
+        }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--white);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background-color: var(--primary-navy);
+            color: var(--white);
+            text-align: center;
+            padding: 25px 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        header p {
+            margin: 5px 0 0 0;
+            font-size: 1rem;
+            font-weight: 300;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .form-section, .exam-section, .result-section {
+            background: var(--gray-light);
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-top: 4px solid var(--primary-navy);
+        }
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 15px;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--primary-navy);
+            color: var(--white);
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            font-family: 'Sarabun', sans-serif;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: var(--secondary-navy); }
+        
+        .subject-box {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+        .subject-title {
+            font-size: 1.2rem;
+            color: var(--primary-navy);
+            border-bottom: 2px solid var(--primary-navy);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .question-block {
+            margin-bottom: 20px;
+        }
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .option-label {
+            display: block;
+            margin: 8px 0;
+            font-weight: 400;
+            cursor: pointer;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: center;
+        }
+        .result-table th {
+            background-color: var(--primary-navy);
+            color: white;
+        }
+        .gpa-display {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: 700;
+            color: var(--primary-navy);
+        }
+        #examArea, #resultArea { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ข้อสอบกลางภาค</h1>
+        <p>คณะสถาปัตยกรรมศาสตร์และการออกแบบ มหาวิทยาลัยเบงจันทร์<br>ปีการศึกษา 2569</p>
+    </header>
+
+    <div class="container">
+        <div class="form-section" id="infoArea">
+            <h2 style="text-align: center; color: var(--primary-navy);">ข้อมูลผู้เข้าสอบ</h2>
+            <label for="studentName">ชื่อ - นามสกุล</label>
+            <input type="text" id="studentName" placeholder="กรอกชื่อ-นามสกุล..." required>
+            
+            <label for="majorSelect">สาขาวิชา</label>
+            <select id="majorSelect">
+                <option value="">-- เลือกสาขาวิชา --</option>
+                <option value="arch">สถาปัตยกรรม (5 ปี)</option>
+                <option value="interior">ออกแบบภายใน</option>
+                <option value="product">ศิลปประยุกต์และออกแบบผลิตภัณฑ์</option>
+                <option value="urban">สถาปัตยกรรมผังเมือง</option>
+            </select>
+
+            <label for="yearSelect">ชั้นปี (ภาคการเรียนที่ 1)</label>
+            <select id="yearSelect">
+                <option value="">-- เลือกชั้นปี --</option>
+                <option value="1">ปี 1</option>
+                <option value="2">ปี 2</option>
+                <option value="3">ปี 3</option>
+                <option value="4">ปี 4</option>
+                <option value="5">ปี 5 (เฉพาะสถาปัตยกรรม)</option>
+            </select>
+
+            <button onclick="startExam()">เริ่มทำข้อสอบ</button>
+        </div>
+
+        <div class="exam-section" id="examArea">
+            <h2 id="examHeader" style="color: var(--primary-navy);"></h2>
+            <div id="examContent"></div>
+            <button onclick="submitExam()" style="background-color: #2E8B57;">ส่งข้อสอบและประมวลผลเกรด</button>
+        </div>
+
+        <div class="result-section" id="resultArea">
+            <h2 style="text-align: center; color: var(--primary-navy);">ผลการสอบและเกรดรายวิชา</h2>
+            <p id="studentResultName" style="text-align: center; font-size: 1.1rem; font-weight: 600;"></p>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th>วิชา</th>
+                        <th>คะแนน (เต็ม 10)</th>
+                        <th>เกรด</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTableBody"></tbody>
+            </table>
+            <div class="gpa-display">เกรดเฉลี่ย (GPA): <span id="totalGPA"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. นำ firebaseConfig ของคุณมาใส่ตรงนี้
+        // ==========================================
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBZD0kxpEOUFemz661kS9KH_YUu3P4zhco",
+  authDomain: "bcu-architecture-exam.firebaseapp.com",
+  projectId: "bcu-architecture-exam",
+  storageBucket: "bcu-architecture-exam.firebasestorage.app",
+  messagingSenderId: "508004501183",
+  appId: "1:508004501183:web:704bec70a9c19e42bb280a",
+  measurementId: "G-RP5927DR5F"
+};
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ==========================================
+        // 2. ฐานข้อมูลวิชาและข้อสอบ
+        // ==========================================
+        // ข้อสอบคุณภาพสูงสำหรับวิชา สถาปัตยกรรมพื้นฐาน 1
+        const archYear1Subjects = [
+            {
+                title: "การออกแบบสถาปัตยกรรมพื้นฐาน 1",
+                questions: [
+                    { q: "1. ข้อใดคือความหมายที่ถูกต้องที่สุดของคำว่า 'Human Scale' ในงานสถาปัตยกรรม?", opts: ["ขนาดของอาคารที่เล็กกว่าปกติ", "สัดส่วนของที่ว่างที่สัมพันธ์กับขนาดและกิจกรรมของมนุษย์", "การออกแบบอาคารให้ดูเป็นมิตรกับสิ่งแวดล้อม", "การจัดระเบียบโครงสร้างทางวิศวกรรม"], ans: 1 },
+                    { q: "2. วลี 'Form Follows Function' เป็นแนวคิดหลักของสถาปนิกท่านใด?", opts: ["Le Corbusier", "Frank Lloyd Wright", "Louis Sullivan", "Mies van der Rohe"], ans: 2 },
+                    { q: "3. ข้อใดคือองค์ประกอบทางทัศนศิลป์เบื้องต้น (Primary Elements) ของรูปทรง?", opts: ["จุด เส้น ระนาบ ปริมาตร", "แสง เงา พื้นผิว สี", "มวล น้ำหนัก โครงสร้าง สเปซ", "ความสมดุล จังหวะ สัดส่วน"], ans: 0 },
+                    { q: "4. การออกแบบช่องเปิดของอาคารในประเทศไทย เพื่อรับแสงธรรมชาติและลดความร้อน ควรหันไปทางทิศใดมากที่สุด?", opts: ["ทิศตะวันออก และ ตะวันตก", "ทิศเหนือ และ ทิศใต้", "ทิศตะวันตกเฉียงใต้ และ ทิศเหนือ", "ทิศตะวันออกเฉียงเหนือ"], ans: 1 },
+                    { q: "5. 'Golden Ratio' หรือ สัดส่วนทองคำ มีค่าตัวเลขประมาณเท่าใด?", opts: ["1.414", "1.618", "3.142", "2.718"], ans: 1 },
+                    { q: "6. ความสัมพันธ์ระหว่าง 'Solid' และ 'Void' ในการออกแบบอาคาร ส่งผลต่อเรื่องใดมากที่สุด?", opts: ["การรับน้ำหนักของเสา", "การประเมินราคาวัสดุ", "ความรู้สึกของมวลอาคารและการเชื่อมต่อของสเปซ", "การกำหนดกฎหมายควบคุมอาคาร"], ans: 2 },
+                    { q: "7. การจัดองค์ประกอบแบบ Symmetrical Balance ให้ความรู้สึกอย่างไรแก่งานสถาปัตยกรรม?", opts: ["ความเคลื่อนไหวและอิสระ", "ความสง่างาม มั่นคง และเป็นทางการ", "ความขัดแย้งและน่าตื่นเต้น", "ความเป็นธรรมชาติและลื่นไหล"], ans: 1 },
+                    { q: "8. 'Circulation' ในการออกแบบผังพื้น (Plan) หมายถึงสิ่งใด?", opts: ["ระบบระบายอากาศ", "ระบบหมุนเวียนน้ำภายในอาคาร", "เส้นทางสัญจรและการเข้าถึงสเปซต่างๆ ของผู้ใช้งาน", "ทิศทางการโคจรของดวงอาทิตย์รอบไซต์งาน"], ans: 2 },
+                    { q: "9. ในการวิเคราะห์บริบทที่ตั้ง (Site Analysis) ข้อใดจัดเป็นข้อมูลเชิงกายภาพ (Physical Data)?", opts: ["วิถีชีวิตของชุมชนรอบข้าง", "ประวัติศาสตร์ของย่านนั้น", "ทิศทางลม แดด และสภาพภูมิประเทศ", "กฎหมายผังเมือง"], ans: 2 },
+                    { q: "10. ข้อใดคือประโยชน์หลักของการทำ 'Mass Study' หรือการศึกษาฟอร์มอาคารเบื้องต้น?", opts: ["เพื่อความแม่นยำในการเขียนแบบก่อสร้าง", "เพื่อทดสอบความสัมพันธ์ของปริมาตรอาคารกับบริบทแวดล้อม", "เพื่อคำนวณโครงสร้างเหล็ก", "เพื่อออกแบบรายละเอียดของเฟอร์นิเจอร์"], ans: 1 }
+                ]
+            }
+        ];
+
+        // ฟังก์ชันสร้างรายวิชาพร้อมข้อสอบจำลองอัตโนมัติ เพื่อให้ระบบครบถ้วนและไม่ขาดวิชาใดเลย
+        function generateSubjects(subjectNames) {
+            return subjectNames.map(name => {
+                let questions = [];
+                for (let i = 1; i <= 10; i++) {
+                    questions.push({
+                        q: `${i}. ข้อสอบวัดผลความรู้ความเข้าใจในรายวิชา: ${name} (ข้อที่ ${i})`,
+                        opts: ["ก. ตัวเลือกที่ 1 (คำตอบที่ถูกต้อง)", "ข. ตัวเลือกที่ 2", "ค. ตัวเลือกที่ 3", "ง. ตัวเลือกที่ 4"],
+                        ans: 0
+                    });
+                }
+                return { title: name, questions: questions };
+            });
+        }
+
+        const curriculum = {
+            "arch": {
+                "1": [archYear1Subjects[0], ...generateSubjects(["การวาดเส้นและแสดงแบบสถาปัตยกรรม 1", "ทัศนศิลป์พื้นฐาน", "คณิตศาสตร์สำหรับสถาปนิก (GE)", "ภาษาไทยเพื่อการสื่อสาร (GE)", "ภาษาอังกฤษพื้นฐาน 1 (GE)"])],
+                "2": generateSubjects(["การออกแบบสถาปัตยกรรม 1", "โครงสร้างและวัสดุก่อสร้าง 1", "ประวัติศาสตร์สถาปัตยกรรมตะวันตก", "การเขียนแบบสถาปัตยกรรมด้วยคอมพิวเตอร์ (CAD)", "ฟิสิกส์สำหรับสถาปนิก", "ภาษาอังกฤษเพื่อวิชาชีพ (GE)"]),
+                "3": generateSubjects(["การออกแบบสถาปัตยกรรม 3", "ระบบอุปกรณ์อาคาร", "โครงสร้างเหล็กและคอนกรีตเสริมเหล็ก", "สถาปัตยกรรมไทย", "กลุ่มวิชาสังคมศาสตร์ (GE)", "วิชาเลือกเสรี"]),
+                "4": generateSubjects(["การออกแบบสถาปัตยกรรม 5", "การผังเมืองเบื้องต้น", "การควบคุมสภาพแวดล้อมในอาคาร", "กฎหมายและวิชาชีพสถาปัตยกรรม", "กลุ่มวิชามนุษยศาสตร์ (GE)"]),
+                "5": generateSubjects(["โครงการวิทยานิพนธ์สถาปัตยกรรม", "การบริหารจัดการงานก่อสร้าง", "กลุ่มวิชาบูรณาการ"])
+            },
+            "interior": {
+                "1": generateSubjects(["พื้นฐานการออกแบบภายใน 1", "การวาดเส้นและการแสดงแบบ 1", "ทฤษฎีสีและแสง", "ภาษาไทยเพื่อการสื่อสาร (GE)", "ภาษาอังกฤษพื้นฐาน 1 (GE)", "กลุ่มวิชาคณิตศาสตร์ (GE)"]),
+                "2": generateSubjects(["การออกแบบภายใน 1", "วัสดุและการตกแต่งภายใน", "ประวัติศาสตร์ศิลปะและสถาปัตยกรรมภายใน", "การเขียนแบบรายละเอียด 1", "คอมพิวเตอร์ช่วยในการออกแบบ (CAD/3D)", "ภาษาอังกฤษเพื่อวิชาชีพ (GE)"]),
+                "3": generateSubjects(["การออกแบบภายใน 3", "งานระบบในอาคาร", "เฟอร์นิเจอร์และการผลิต", "การจัดทำรายการประกอบแบบ", "กลุ่มวิชาสังคมศาสตร์ (GE)", "วิชาเลือกเสรี (บังคับเลือก)"]),
+                "4": generateSubjects(["วิทยานิพนธ์การออกแบบภายใน", "จรรยาบรรณและวิชาชีพออกแบบภายใน"])
+            },
+            "product": {
+                "1": generateSubjects(["วาดเขียนพื้นฐาน", "องค์ประกอบศิลป์", "พื้นฐานการออกแบบผลิตภัณฑ์", "ภาษาไทยเพื่อการสื่อสาร (GE)", "ภาษาอังกฤษพื้นฐาน 1 (GE)", "วิทยาศาสตร์พื้นฐาน (GE)"]),
+                "2": generateSubjects(["การออกแบบผลิตภัณฑ์ 1", "วัสดุและกระบวนการผลิต", "การเขียนแบบผลิตภัณฑ์", "คอมพิวเตอร์ช่วยออกแบบ 1 (CAID)", "ภาษาอังกฤษเพื่อวิชาชีพ (GE)", "วิชาเลือกเสรี"]),
+                "3": generateSubjects(["การออกแบบผลิตภัณฑ์ 3", "การออกแบบตามหลักสรีรศาสตร์", "ศิลปประยุกต์และภูมิปัญญาท้องถิ่น", "วิชาเลือกเสรี", "วิชาเลือกเสรี"]),
+                "4": generateSubjects(["วิทยานิพนธ์การออกแบบผลิตภัณฑ์", "พอร์ตโฟลิโอและการเตรียมตัวสู่วิชาชีพ", "กลุ่มวิชาบูรณาการ"])
+            },
+            "urban": {
+                "1": generateSubjects(["การออกแบบสถาปัตยกรรมพื้นฐาน 1", "การสื่อสารทางสถาปัตยกรรม 1", "ความรู้เบื้องต้นเกี่ยวกับเมืองและผังเมือง", "คณิตศาสตร์สำหรับสถาปนิก (GE)", "ภาษาไทยเพื่อการสื่อสาร (GE)", "ภาษาอังกฤษพื้นฐาน 1 (GE)"]),
+                "2": generateSubjects(["การออกแบบสถาปัตยกรรมผังเมือง 1", "ประวัติศาสตร์และทฤษฎีสถาปัตยกรรมผังเมือง", "ระบบสารสนเทศภูมิศาสตร์ (GIS) สำหรับการผังเมือง", "วัสดุและเทคโนโลยีการก่อสร้างพื้นฐาน", "ภาษาอังกฤษเพื่อวิชาชีพ (GE)", "กลุ่มวิชาสังคมศาสตร์ (GE)"]),
+                "3": generateSubjects(["การออกแบบสถาปัตยกรรมผังเมือง 3", "การวางผังการใช้ประโยชน์ที่ดิน", "ระบบขนส่งและการสัญจรในเมือง", "กฎหมายควบคุมอาคารและการผังเมือง", "กลุ่มวิชามนุษยศาสตร์ (GE)", "วิชาเลือกเสรี"]),
+                "4": generateSubjects(["วิทยานิพนธ์สถาปัตยกรรมผังเมือง", "การบริหารจัดการและการพัฒนาเมือง", "การเตรียมพอร์ตโฟลิโอ"])
+            }
+        };
+
+        let currentExams = [];
+        let studentData = {};
+
+        function startExam() {
+            const name = document.getElementById('studentName').value;
+            const major = document.getElementById('majorSelect').value;
+            const year = document.getElementById('yearSelect').value;
+
+            if (!name || !major || !year) {
+                alert("กรุณากรอกข้อมูลและเลือกสาขา/ชั้นปีให้ครบถ้วน");
+                return;
+            }
+
+            if (year === "5" && major !== "arch") {
+                alert("ปี 5 มีเฉพาะในสาขาสถาปัตยกรรมหลัก (5 ปี) เท่านั้น");
+                return;
+            }
+
+            studentData = { name, major, year, timestamp: new Date() };
+            currentExams = curriculum[major][year];
+
+            const majorText = document.getElementById('majorSelect').options[document.getElementById('majorSelect').selectedIndex].text;
+            document.getElementById('examHeader').innerText = `ข้อสอบ: ${majorText} ชั้นปีที่ ${year}`;
+
+            renderExams();
+            document.getElementById('infoArea').style.display = 'none';
+            document.getElementById('examArea').style.display = 'block';
+        }
+
+        function renderExams() {
+            const examContent = document.getElementById('examContent');
+            examContent.innerHTML = '';
+
+            currentExams.forEach((subject, subIndex) => {
+                let subHtml = `<div class="subject-box"><div class="subject-title">รายวิชา: ${subject.title}</div>`;
+                
+                subject.questions.forEach((q, qIndex) => {
+                    subHtml += `<div class="question-block">
+                        <div class="question-text">${q.q}</div>`;
+                    
+                    q.opts.forEach((opt, optIndex) => {
+                        subHtml += `<label class="option-label">
+                            <input type="radio" name="sub${subIndex}_q${qIndex}" value="${optIndex}"> ${opt}
+                        </label>`;
+                    });
+                    subHtml += `</div>`;
+                });
+                subHtml += `</div>`;
+                examContent.innerHTML += subHtml;
+            });
+        }
+
+        function calculateGrade(score) {
+            // ระบบตัดเกรด 8 ระดับ (อิง 10 คะแนนเต็ม)
+            if (score >= 9) return { grade: 'A', point: 4.0 };
+            if (score >= 8) return { grade: 'B+', point: 3.5 };
+            if (score >= 7) return { grade: 'B', point: 3.0 };
+            if (score >= 6) return { grade: 'C+', point: 2.5 };
+            if (score >= 5) return { grade: 'C', point: 2.0 };
+            if (score >= 4) return { grade: 'D+', point: 1.5 };
+            if (score >= 3) return { grade: 'D', point: 1.0 };
+            return { grade: 'F', point: 0.0 };
+        }
+
+        function submitExam() {
+            let totalPoints = 0;
+            let resultsData = [];
+            const resultBody = document.getElementById('resultTableBody');
+            resultBody.innerHTML = '';
+
+            currentExams.forEach((subject, subIndex) => {
+                let score = 0;
+                subject.questions.forEach((q, qIndex) => {
+                    const selected = document.querySelector(`input[name="sub${subIndex}_q${qIndex}"]:checked`);
+                    if (selected && parseInt(selected.value) === q.ans) {
+                        score++;
+                    }
+                });
+
+                const gradeInfo = calculateGrade(score);
+                totalPoints += gradeInfo.point;
+
+                resultsData.push({ subject: subject.title, score: score, grade: gradeInfo.grade });
+
+                resultBody.innerHTML += `<tr>
+                    <td style="text-align: left;">${subject.title}</td>
+                    <td>${score}/10</td>
+                    <td><strong>${gradeInfo.grade}</strong></td>
+                </tr>`;
+            });
+
+            const gpa = (totalPoints / currentExams.length).toFixed(2);
+            document.getElementById('totalGPA').innerText = gpa;
+            document.getElementById('studentResultName').innerText = `คุณ ${studentData.name}`;
+
+            // บันทึกข้อมูลลง Firebase
+            studentData.results = resultsData;
+            studentData.gpa = gpa;
+            
+            db.collection("exam_results").add(studentData)
+                .then(() => {
+                    console.log("บันทึกข้อมูลนักศึกษาสำเร็จ");
+                })
+                .catch((error) => {
+                    console.error("Error adding document: ", error);
+                });
+
+            document.getElementById('examArea').style.display = 'none';
+            document.getElementById('resultArea').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
